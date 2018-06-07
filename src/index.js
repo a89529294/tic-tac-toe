@@ -139,10 +139,6 @@ class Turns extends React.Component {
   }
 }
 
-
-
-
-
 class Game extends React.Component {
   constructor(props) {
     super(props);
@@ -159,6 +155,7 @@ class Game extends React.Component {
     };
 
     this.jumpTo = this.jumpTo.bind(this);
+    this.reset = this.reset.bind(this);
   }
 
   handleClick(i) {
@@ -185,8 +182,23 @@ class Game extends React.Component {
     this.setState({
       stepNumber: step,
       xIsNext: (step % 2) === 0
-    });
+    })
   }
+
+  reset(){
+    this.setState({
+      history: [
+        {
+          squares: Array(9).fill(null)
+        }
+      ],
+      stepNumber: 0,
+      xIsNext: true,
+      isOrderDesc: true,
+      winningCoord:[],
+    })
+  }
+    
 
   render() {
     const history = this.state.history;
@@ -219,6 +231,7 @@ class Game extends React.Component {
             onClick={i => this.handleClick(i)}
             winningCoord={this.state.winningCoord}
           />
+          <button onClick={this.reset}>reset</button>
         </div>
         <div className="game-info">
           <div>{status}</div>
