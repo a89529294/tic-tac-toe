@@ -48,4 +48,27 @@ body {
   .game-info {
     margin-left: 20px;
   }
+
+  .selected-square {
+    animation: pulse 5s 1;
+  }
+
+  @keyframes pulse {
+    0% {
+      background-color: white;
+    }
+    100% {
+      background-color: #FF4136;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .game-board{
+      width: 100%;
+    } 
+    .game {
+      display: flex;
+      flex-direction: column;
+    }
+   }
   

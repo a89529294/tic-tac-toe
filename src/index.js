@@ -3,19 +3,19 @@ import ReactDOM from 'react-dom';
 import './index.css';
 
 function Square(props) {
-  console.log('square win: ', props.win)
-  const styleObj = props.win ? {backgroundColor:'red'}:{}
+  
   return (
-    <button style={styleObj} className="square" onClick={props.onClick}>
+    <button style={{backgroundColor:props.win?'red':''}} className={`square ${props.selected? ' selected-square':''}`} onClick={props.onClick}>
       {props.value}
     </button>
   );
 }
 
 class Board extends React.Component {
-  renderSquare(i, isPartOfWinningLine) {
+  renderSquare(i, isPartOfWinningLine, currentPosition) {
     return (
       <Square
+        selected={currentPosition === i}
         win={isPartOfWinningLine}
         key={i}
         value={this.props.squares[i]}
@@ -25,6 +25,7 @@ class Board extends React.Component {
   }
 
   render() {
+    const currentPosition = this.props.currentPosition;
     let counter = -1;
     return (
       <div>
@@ -35,16 +36,14 @@ class Board extends React.Component {
                 [...Array(3)].map(() => {
                   counter++;
                   let win = false
-                  console.log('winning coord in board',this.props.winningCoord)
                   this.props.winningCoord.forEach(ele=>{
                     if (ele === counter){
-                      console.log('winning square: ', ele)
                       win = true;
                     }
                       
                   })
                   return (
-                    this.renderSquare(counter, win)
+                    this.renderSquare(counter, win, currentPosition)
                   )
                 })
               }
@@ -82,18 +81,17 @@ class Turns extends React.Component {
     if (!this.state.isOrderDesc){
       copyHistory.reverse();
     }
-    console.log(copyHistory)
     return (
       <ol>
         {copyHistory.map((step, move) => {
           let naturalMove = move;
-          let currentMove = []
+          let currentMove = [];
+          let currentIdx;
 
           if (!this.state.isOrderDesc) {
             move = history.length-1-move
           }
 
-          console.log(move)
             if (move !== 0) {
               step.squares.some((ele, idx) => {
                 const nextMove = this.state.isOrderDesc ? move -1 : naturalMove +1
@@ -101,32 +99,22 @@ class Turns extends React.Component {
                     const row = Math.floor(idx / 3);
                     const col = idx % 3;
                     currentMove = [ele, row, col];
+                    currentIdx = idx;
                     return true;
                   }
-                
               })
             }
             let desc = move ?
               'Go to move #' + move :
               'Go to game start'
           
-          
           return (
-            <li key={move}>
-              {move === this.state.stepNumber ?
-                <button style={{ fontWeight: 'bold' }} onClick={() => this.props.jumpTo(move)}>
+            <li key={move}>         
+                <button style={{ fontWeight: this.state.stepNumber === move? 'bold':'normal' }} onClick={() => this.props.jumpTo(move, currentIdx)}>
                   {desc}
-                  {currentMove.length ? ` player:${currentMove[0]} row:${currentMove[1]} col:${currentMove[2]}` : ''}
+                  {currentMove.length ? ` player:${currentMove[0]} (${currentMove[1]},${currentMove[2]})` : ''}
                 </button>
-                :
-                <button onClick={() => this.props.jumpTo(move)}>
-                  {desc}
-                  {currentMove.length ? ` player:${currentMove[0]} row:${currentMove[1]} col:${currentMove[2]}` : ''}
-                </button>
-              }
-
             </li>
-
 
           )
         }
@@ -152,6 +140,7 @@ class Game extends React.Component {
       xIsNext: true,
       isOrderDesc: true,
       winningCoord:[],
+      currentPosition:null,//array of arrays of current positions eg [['X',0,1],['O',2,3]]  
     };
 
     this.jumpTo = this.jumpTo.bind(this);
@@ -178,11 +167,16 @@ class Game extends React.Component {
     });
   }
 
-  jumpTo(step) {
-    this.setState({
-      stepNumber: step,
-      xIsNext: (step % 2) === 0
-    })
+  jumpTo(step, currentIdx) {
+   
+    this.setState(function(prevState){
+      return {
+        currentPosition:currentIdx,
+        stepNumber: step,
+        xIsNext: (step % 2) === 0
+      }
+     
+    },()=>console.log(this.state.currentPosition))
   }
 
   reset(){
@@ -196,6 +190,7 @@ class Game extends React.Component {
       xIsNext: true,
       isOrderDesc: true,
       winningCoord:[],
+      currentPosition:[],
     })
   }
     
@@ -205,10 +200,8 @@ class Game extends React.Component {
     const current = history[this.state.stepNumber];
     const winner = calculateWinner(current.squares) ? calculateWinner(current.squares).value : '';
     this.state.winningCoord = calculateWinner(current.squares) ? calculateWinner(current.squares).coord : [];
-    console.log('winning coord:', this.state.winningCoord)
 
     const flipOrder = function () {
-      console.log('hi')
       this.setState(function (prevState) {
         return ({
           isOrderDesc: !prevState.isOrderDesc
@@ -227,6 +220,7 @@ class Game extends React.Component {
       <div className="game">
         <div className="game-board">
           <Board
+            currentPosition={this.state.currentPosition}
             squares={current.squares}
             onClick={i => this.handleClick(i)}
             winningCoord={this.state.winningCoord}
@@ -241,7 +235,7 @@ class Game extends React.Component {
             jumpTo={this.jumpTo}
           />}
         </div>
-        <button onClick={flipOrder}>FLIP</button>
+        <button  onClick={flipOrder}>FLIP</button>
       </div>
     );
   }
